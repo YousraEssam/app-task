@@ -21,3 +21,4 @@ Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/complete-profile', 'Auth\RegisterController@completeInfo')->name('complete-profile');
 Route::post('/register', 'Auth\RegisterController@register')->name('registerUser');
 
+Route::resource('appointments', 'AppointmentController')->middleware('auth');

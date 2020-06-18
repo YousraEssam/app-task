@@ -13,9 +13,14 @@
                             {{ session('status') }}
                         </div>
                     @endif
-
+                    Welcome, {{ Auth::user()->user_name}}
+                    <br><br>
                     You are logged in!
+
+                        <br>
+                    <a href="{{ route('appointments.create') }}" class="btn btn-primary" style="float: right">Add an appointment</a>
                 </div>
+
             </div>
         </div>
     </div>

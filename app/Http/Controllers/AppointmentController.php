@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Appointment;
+use App\Models\Appointment;
+use App\Http\Requests\AppointmentRequest;
+use App\Models\Doctor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
 {
@@ -24,7 +27,9 @@ class AppointmentController extends Controller
      */
     public function create()
     {
-        //
+        return view('appointments.create', [
+            'doctors' => Doctor::all(),
+        ]);
     }
 
     /**
@@ -33,9 +38,18 @@ class AppointmentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(AppointmentRequest $request)
     {
-        //
+        $appointment = Appointment::create([
+            'patient_id' => Auth::user()->patient->id,
+            'doctor_id' => $request->doctor_id,
+            'date' => $request->date,
+        ]);
+        if($appointment){
+            return redirect()->route('home')->with('status', 'Appointment Created Successfully');
+        }
+        return redirect()->route('home')->with('status', 'Appointment is not created');
+
     }
 
     /**

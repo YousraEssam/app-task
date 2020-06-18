@@ -10,6 +10,15 @@ class Appointment extends Model
     use SoftDeletes;
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'patient_id', 'doctor_id', 'date',
+    ];
+
+    /**
      * Get the patient that owns the appointment.
      */
     public function patient()
