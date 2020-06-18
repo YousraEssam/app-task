@@ -3,11 +3,18 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PainType;
+use App\Models\Patient;
 use App\Providers\RouteServiceProvider;
 use App\User;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Response;
 
 class RegisterController extends Controller
 {
@@ -23,7 +30,7 @@ class RegisterController extends Controller
     */
 
     use RegistersUsers;
-
+    use Authenticatable;
     /**
      * Where to redirect users after registration.
      *
@@ -50,9 +57,16 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
+            'fname' => ['required', 'string', 'max:255'],
+            'lname' => ['required', 'string', 'max:255'],
+            'user_name' => ['required', 'string'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'mobile_number' => ['required', 'max:11'],
+            'birth_date' => ['required'],
+            'gender' => ['required'],
+            'country' => ['required'],
+            'occupation' => ['required'],
+            'pain_types' => ['required']
         ]);
     }
 
@@ -64,10 +78,55 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
+        $user = User::create([
+            'fname' => $data['fname'],
+            'lname' => $data['lname'],
+            'user_name' => $data['user_name'],
+            'mobile_number' => $data['mobile_number'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+        ]);
+        $patient = Patient::create([
+            'birth_date' => $data['birth_date'],
+            'gender' => $data['gender'],
+            'country' => $data['country'],
+            'occupation' => $data['occupation'],
+            'user_id' => $user->id
+        ]);
+        $patient->pain_types()->attach($data['pain_types']);
+        return $user;
+    }
+
+    /**
+     * Handle a registration request for the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        event(new Registered($user = $this->create($request->all())));
+
+        $this->guard()->login($user);
+
+        if ($response = $this->registered($request, $user)) {
+            return $response;
+        }
+
+        return $request->wantsJson()
+                    ? new Response('', 201)
+                    : redirect($this->redirectPath());
+    }
+
+    public function completeInfo(Request $request)
+    {
+        return view('auth.complete-profile', [
+            'countries' => DB::table('countries')->get(),
+            'pain_types' => PainType::all(),
+            'user_name' => $request->user_name,
+            'password' => $request->password,
         ]);
     }
 }
